@@ -1,31 +1,11 @@
 <?php
 
 /**
- * Implements hook_preprocess_link().
- */
-function ctools_automodal_preprocess_link(&$variables) {
-  static $ctools_modal_included;
-
-  if (!empty($variables['options']['modal'])) {
-
-    // Only process the modal includes once per request.
-    if (!isset($ctools_modal_included)) {
-      ctools_include('modal');
-      ctools_modal_add_js();
-    }
-
-    $variables['options']['attributes']['class'][] = 'ctools-use-modal';
-
-    if (strpos($variables['path'], 'nojs') === FALSE /*&& ($item = menu_get_item($variables['path'])) && !empty($item['modal'])*/) {
-      $variables['path'] .= '/nojs';
-    }
-  }
-}
-
-/**
  * Implements hook_menu_alter().
  */
 function ctools_automodal_menu_alter(&$items) {
+  $modal_paths = array();
+
   foreach ($items as $path => $item) {
     if (!empty($item['modal'])) {
       if (strpos($path, '%ctools_js') === FALSE && $item['page callback'] === 'drupal_get_form') {
@@ -34,28 +14,69 @@ function ctools_automodal_menu_alter(&$items) {
         $items["$path/%ctools_js"]['page arguments'][] = substr_count($path, '/') + 1;
         $items["$path/%ctools_js"]['type'] = MENU_CALLBACK;
         $items["$path"]['options']['modal'] = TRUE;
+        $modal_paths[] = preg_replace('/%[^\/]+/', '*', $path);
       }
       elseif ($item['page callback'] !== 'drupal_get_form') {
 
       }
     }
   }
+
+  variable_set('ctools_automodal_paths', $modal_paths);
 }
 
 /**
- * Implements hook_menu_local_tasks_alter().
+ * Check if an internal Drupal path should be converted to a modal link.
  */
-function ctools_automodal_menu_local_tasks_alter(&$data, $router_item, $root_path) {
-  foreach ($data['actions']['output'] as $index => &$local_task) {
-    $modal_item = menu_get_item($local_task['#link']['path'] . '/nojs');
-    if ($modal_item && $modal_item['page callback'] = 'ctools_automodal_get_form' && !empty($modal_item['access'])) {
-      $link = &$local_task['#link'];
-      $link['options']['modal'] = TRUE;
-      ctools_automodal_preprocess_link($link);
-      $link['href'] = $link['path'];
-      $link['localized_options'] += $link['options'];
+function ctools_automodal_is_path_modal($path) {
+  static $modal_paths_regex;
+
+  if (!isset($modal_paths_regex)) {
+    $modal_paths = variable_get('ctools_automodal_paths', array());
+    foreach ($modal_paths as &$modal_path) {
+      $modal_path = preg_quote($modal_path, '/');
+      $modal_path = str_replace('\*', '.*', $modal_path);
+    }
+    $modal_paths_regex = '/^(' . implode('|', $modal_paths) . ')$/';
+  }
+
+  return (bool) preg_match($modal_paths_regex, $path);
+}
+
+/**
+ * Implements hook_preprocess_link().
+ */
+function ctools_automodal_preprocess_link(&$variables) {
+  static $ctools_modal_included = FALSE;
+
+  if (ctools_automodal_is_path_modal($variables['path'])) {
+    $item = menu_get_item($variables['path']);
+
+    // Only process the modal includes once per request.
+    if (!$ctools_modal_included) {
+      ctools_include('modal');
+      ctools_modal_add_js();
+      $ctools_modal_included = TRUE;
+    }
+
+    $variables['options']['attributes']['class'][] = 'ctools-use-modal';
+
+    if (strpos($variables['path'], 'nojs') === FALSE) {
+      $variables['path'] .= '/nojs';
     }
   }
+}
+
+/**
+ * Implements hook_preprocess_menu_local_action().
+ */
+function ctools_automodal_preprocess_menu_local_action(&$variables) {
+  $link = array(
+    'path' => &$variables['element']['#link']['href'],
+    'options' => &$variables['element']['#link']['localized_options'],
+    'text' => &$variables['element']['#link']['title'],
+  );
+  ctools_automodal_preprocess_link($link);
 }
 
 /**
