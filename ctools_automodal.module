@@ -1,0 +1,92 @@
+<?php
+
+/**
+ * Implements hook_preprocess_link().
+ */
+function ctools_automodal_preprocess_link(&$variables) {
+  static $ctools_modal_included;
+
+  if (!empty($variables['options']['modal'])) {
+
+    // Only process the modal includes once per request.
+    if (!isset($ctools_modal_included)) {
+      ctools_include('modal');
+      ctools_modal_add_js();
+    }
+
+    $variables['options']['attributes']['class'][] = 'ctools-use-modal';
+
+    if (strpos($variables['path'], 'nojs') === FALSE /*&& ($item = menu_get_item($variables['path'])) && !empty($item['modal'])*/) {
+      $variables['path'] .= '/nojs';
+    }
+  }
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function ctools_automodal_menu_alter(&$items) {
+  foreach ($items as $path => $item) {
+    if (!empty($item['modal'])) {
+      if (strpos($path, '%ctools_js') === FALSE && $item['page callback'] === 'drupal_get_form') {
+        $items["$path/%ctools_js"] = $item;
+        $items["$path/%ctools_js"]['page callback'] = 'ctools_automodal_get_form';
+        $items["$path/%ctools_js"]['page arguments'][] = substr_count($path, '/') + 1;
+        $items["$path/%ctools_js"]['type'] = MENU_CALLBACK;
+        $items["$path"]['options']['modal'] = TRUE;
+      }
+      elseif ($item['page callback'] !== 'drupal_get_form') {
+
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ */
+function ctools_automodal_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+  foreach ($data['actions']['output'] as $index => &$local_task) {
+    $modal_item = menu_get_item($local_task['#link']['path'] . '/nojs');
+    if ($modal_item && $modal_item['page callback'] = 'ctools_automodal_get_form' && !empty($modal_item['access'])) {
+      $link = &$local_task['#link'];
+      $link['options']['modal'] = TRUE;
+      ctools_automodal_preprocess_link($link);
+      $link['href'] = $link['path'];
+      $link['localized_options'] += $link['options'];
+    }
+  }
+}
+
+/**
+ * Display a Drupal form using CTools modal or normal page display.
+ */
+function ctools_automodal_get_form() {
+  $args = func_get_args();
+  $form_id = array_shift($args);
+  $js = $ajax = array_pop($args);
+
+  if ($ajax) {
+    ctools_include('modal');
+    ctools_include('ajax');
+
+    $form_state = array(
+      'ajax' => $ajax,
+      'build_info' => array('args' => $args),
+    );
+    $commands = ctools_modal_form_wrapper($form_id, $form_state);
+
+    if (empty($commands)) {
+      $commands[] = ctools_modal_command_loading();
+      if (!empty($_GET['destination'])) {
+        $commands[] = ctools_ajax_command_redirect($_GET['destination']);
+      }
+    }
+    print ajax_render($commands);
+    exit();
+  }
+  else {
+    array_unshift($args, $form_id);
+    return call_user_func_array('drupal_get_form', $args);
+  }
+}

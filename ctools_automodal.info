@@ -1,0 +1,5 @@
+name = CTools Automodal
+description = Provides an easy to use automatic modal page API.
+core = 7.x
+dependencies[] = ctools
+files[] = ctools_automodal.module
