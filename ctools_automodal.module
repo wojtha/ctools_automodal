@@ -1,6 +1,18 @@
 <?php
 
 /**
+ * Implements hook_module_implements_alter().
+ */
+function ctools_automodal_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'menu_alter') {
+    // Try to ensure that ctools_automodal_menu_alter() gets invoked last.
+    $group = $implementations['ctools_automodal'];
+    unset($implementations['ctools_automodal']);
+    $implementations['ctools_automodal'] = $group;
+  }
+}
+
+/**
  * Implements hook_menu_alter().
  */
 function ctools_automodal_menu_alter(&$items) {
