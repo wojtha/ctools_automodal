@@ -33,7 +33,7 @@ function ctools_automodal_menu_alter(&$items) {
         $items["$path/%ctools_js"]['page arguments'][] = substr_count($path, '/') + 1;
         $items["$path/%ctools_js"]['type'] = MENU_CALLBACK;
       }
-      $modal_paths[] = preg_replace('/%[^\/]+/', '*', $path);
+      $modal_paths[] = preg_replace('/%[^\/]*/', '*', $path);
     }
   }
 
