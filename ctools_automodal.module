@@ -18,8 +18,6 @@ function ctools_automodal_module_implements_alter(&$implementations, $hook) {
 function ctools_automodal_menu_alter(&$items) {
   $modal_paths = array();
 
-  $items['filter/tips']['modal'] = TRUE;
-
   foreach ($items as $path => $item) {
     if (!empty($item['modal']) && strpos($path, '%ctools_js') === FALSE) {
       if ($item['page callback'] == 'drupal_get_form') {
