@@ -41,6 +41,129 @@ function ctools_automodal_menu_alter(&$items) {
 }
 
 /**
+ * Implements hook_page_delivery_callback_alter()
+ */
+function ctools_automodal_page_delivery_callback_alter(&$callback) {
+  // jQuery sets a HTTP_X_REQUESTED_WITH header of 'XMLHttpRequest'.
+  // If a page would normally be delivered as an html page, and it is called
+  // from jQuery, deliver it instead as an Ajax response.
+  if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest' && $callback == 'drupal_deliver_html_page') {
+    $path = ctools_automodal_get_system_uri();
+    if (ctools_automodal_is_path_modal($path)) {
+      $page_callback_result = ctools_automodal_get_page_callback_error($path);
+      if (is_int($page_callback_result)) {
+        ctools_automodal_deliver_error($path, $page_callback_result);
+      }
+    }
+    else {
+      $callback = 'ajax_deliver';
+    }
+  }
+}
+
+/**
+ * Returns URI of the request with stripped "nojs" or "ajax".
+ *
+ * @return string
+ */
+function ctools_automodal_get_system_uri() {
+  $path = drupal_parse_url(trim(request_uri(), '/'));
+  $path_parts = explode('/', $path['path']);
+  if (in_array(end($path_parts), array('nojs', 'ajax'))) {
+    array_pop($path_parts);
+    $path = implode('/', $path_parts);
+  }
+  return $path;
+}
+
+/**
+ * Check the menu path for access denied and not found errors.
+ *
+ * Returns MENU_NOT_FOUND, MENU_ACCESS_DENIED or NULL if no error was found.
+ *
+ * @param $path
+ * @return int|null
+ */
+function ctools_automodal_get_page_callback_error($path) {
+  $page_callback_result = NULL;
+  if ($router_item = menu_get_item($path)) {
+    if ($router_item['access'] == FALSE) {
+      $page_callback_result = MENU_ACCESS_DENIED;
+    }
+  }
+  else {
+    $page_callback_result = MENU_NOT_FOUND;
+  }
+  return $page_callback_result;
+}
+
+/**
+ * Package and send the result of a page callback to the browser as HTML.
+ *
+ * @param $page_callback_result
+ *   The result of a page callback. Can be one of:
+ *   - NULL: to indicate no content.
+ *   - An integer menu status constant: to indicate an error condition.
+ *   - A string of HTML content.
+ *   - A renderable array of content.
+ *
+ * @see drupal_deliver_page()
+ * @see drupal_deliver_html_page()
+ */
+function ctools_automodal_deliver_error($path, $page_callback_result) {
+  // Menu status constants are integers; page content is a string or array.
+  if (is_int($page_callback_result)) {
+    $output = '';
+    switch ($page_callback_result) {
+      case MENU_NOT_FOUND:
+        // Print a 404 page.
+        // FIXME?: Returning 404 will show the ajax error.
+        //drupal_add_http_header('Status', '404 Not Found');
+        watchdog('page not found', check_plain($path), array(), WATCHDOG_WARNING);
+
+        // Standard 404 handler.
+        drupal_set_title(t('Page not found'));
+        $output = t('The requested page "@path" could not be found.', array('@path' => request_uri()));
+        break;
+
+      case MENU_ACCESS_DENIED:
+        // Print a 403 page.
+        // FIXME?: Returning 403 will show the ajax error.
+        //drupal_add_http_header('Status', '403 Forbidden');
+        watchdog('access denied', check_plain($path), array(), WATCHDOG_WARNING);
+
+        // Standard 403 handler.
+        drupal_set_title(t('Access denied'));
+        $output = t('You are not authorized to access this page.');
+        break;
+
+      case MENU_SITE_OFFLINE:
+        // Print a 503 page.
+        // FIXME?: Returning 503 will show the ajax error.
+        //drupal_add_http_header('Status', '503 Service unavailable');
+
+        drupal_set_title(t('Site maintenance'));
+        $output = theme('maintenance_page', array('content' => filter_xss_admin(variable_get('maintenance_mode_message',
+          t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Drupal')))))));
+        break;
+    }
+
+    // If there is any error output render it and exit.
+    if ($output) {
+      ctools_include('modal');
+      ctools_include('ajax');
+      ctools_add_js('ajax-responder');
+
+      $commands = ctools_automodal_page_render($output);
+      drupal_alter('modal_error', $commands, $path, $page_callback_result);
+
+      print ajax_render($commands);
+      exit();
+    }
+  }
+}
+
+/**
  * Check if an internal Drupal path should be converted to a modal link.
  */
 function ctools_automodal_is_path_modal($path) {
