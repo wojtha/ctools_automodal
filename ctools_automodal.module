@@ -128,26 +128,24 @@ function ctools_automodal_get_form() {
     $commands = ctools_modal_form_wrapper($form_id, $form_state);
 
     // Handle submitted form.
-    if (!empty($form_state['executed'])) {
+    if (!empty($form_state['executed']) && empty($form_state['rebuild'])) {
       // Overwrite the form wrapper output.
       $commands = array();
       $commands[] = ctools_modal_command_loading();
       // Redirect or reload current page.
+      $options = array();
       if (isset($_GET['destination']) && !url_is_external($_GET['destination'])) {
-        $destination = drupal_parse_url($_GET['destination']);
-        $path = $destination['path'];
-        $options['query'] = $destination['query'];
-        $options['fragment'] = $destination['fragment'];
-        $commands[] = ctools_ajax_command_redirect($path, 0, $options);
+        $options = drupal_parse_url($_GET['destination']);
+        $path = $options['path'];
       }
       elseif (is_array($form_state['redirect'])) {
-        $path = array_shift($form_state['redirect']);
-        $options['query'] = array_shift($form_state['redirect']);
-        $options['fragment'] = array_shift($form_state['redirect']);
-        $commands[] = ctools_ajax_command_redirect($path, 0, $options);
+        list($path, $options) = array_shift($form_state['redirect']);
       }
       elseif (is_string($form_state['redirect'])) {
-        $commands[] = ctools_ajax_command_redirect($form_state['redirect']);
+        $path = $form_state['redirect'];
+      }
+      if (!empty($path)) {
+        $commands[] = ctools_ajax_command_redirect($path, 0, $options);
       }
       else {
         $commands[] = ctools_ajax_command_reload();
