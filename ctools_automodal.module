@@ -139,7 +139,7 @@ function ctools_automodal_get_form() {
         $path = $options['path'];
       }
       elseif (is_array($form_state['redirect'])) {
-        list($path, $options) = array_shift($form_state['redirect']);
+        list($path, $options) = $form_state['redirect'];
       }
       elseif (is_string($form_state['redirect'])) {
         $path = $form_state['redirect'];
