@@ -208,6 +208,19 @@ function ctools_automodal_preprocess_menu_local_action(&$variables) {
 }
 
 /**
+ * Implemenation of hook_theme().
+ */
+function ctools_automodal_theme($existing, $type, $theme, $path) {
+  return array(
+    'ctools_automodal_confirmation' => array(
+      'variables' => array(
+        'messages' => NULL,
+        'confirmation' => NULL,
+        'actions' => NULL,
+      ),
+    ),
+  );
+}
 
 /**
  * Return modal configuration for given path.
@@ -299,6 +312,21 @@ function ctools_automodal_fix_get_q() {
   $_GET['q'] = $path;
 }
 
+
+/**
+ * Renders form confirm page.
+ *
+ * @param $modal_options
+ * @return array
+ *
+ * @see ctools_automodal_get_form()
+ */
+function _ctools_automodal_get_form_confirm_page($modal_options) {
+  $confirmation = call_user_func($modal_options['confirm']['callback'], $modal_options['confirm']);
+  $rendered_confirmation = theme('ctools_automodal_confirmation', $confirmation);
+  return array($modal_options['confirm']['title'], $rendered_confirmation);
+}
+
 /**
  * Display a Drupal form using CTools modal or normal page display.
  */
@@ -337,6 +365,9 @@ function ctools_automodal_get_form() {
         $options = drupal_parse_url($_GET['destination']);
         $path = $options['path'];
       }
+      elseif ($modal_options['confirm']) {
+        list($title, $confirm_page) = _ctools_automodal_get_form_confirm_page($modal_options);
+        $commands[] = ctools_modal_command_display($title, $confirm_page);
       elseif (is_array($form_state['redirect'])) {
         list($path, $options) = $form_state['redirect'];
       }
@@ -415,4 +446,32 @@ function ctools_automodal_page_render($output) {
   $commands = array();
   $commands[] = ctools_modal_command_display($title, $output);
   return $commands;
+}
+
+/**
+ * Default confirmation callback.
+ *
+ * @param array $options
+ */
+function ctools_automodal_confirmation_callback($options) {
+  $confirmation = array();
+  $confirmation['messages']['#markup'] = theme('status_messages');
+  $confirmation['confirmation']['#markup'] = $options['text'];
+  $confirmation['actions']['#markup'] = '<a class="button dismiss" onclick="Drupal.CTools.Modal.modal_dismiss();" href="#">' . t('Dismiss') . '</a>';
+  return $confirmation;
+}
+
+/**
+ * Theme modal confirmation page.
+ */
+function theme_ctools_automodal_confirmation($variables) {
+  $output = '';
+  $output .= '<div class="ctools-automodal-confirmation-wrapper">';
+  $output .= render($variables['messages']);
+  $output .= '<div class="confirmation">';
+  $output .= render($variables['confirmation']);
+  $output .= '</div>';
+  $output .= render($variables['actions']);
+  $output .= '</div>';
+  return $output;
 }
