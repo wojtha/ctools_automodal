@@ -55,9 +55,6 @@ function ctools_automodal_page_delivery_callback_alter(&$callback) {
         ctools_automodal_deliver_error($path, $page_callback_result);
       }
     }
-    else {
-      $callback = 'ajax_deliver';
-    }
   }
 }
 
