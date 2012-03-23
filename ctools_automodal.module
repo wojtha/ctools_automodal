@@ -228,13 +228,8 @@ function ctools_automodal_theme($existing, $type, $theme, $path) {
  * @return array|NULL
  */
 function ctools_automodal_get_modal_options($path) {
-  static $ctools_modal_paths = NULL;
   $modal_options = NULL;
-
-  if (is_null($ctools_modal_paths)) {
-    $ctools_modal_paths = module_invoke_all('modal_paths');
-    drupal_alter('modal_paths', $ctools_modal_paths);
-  }
+  $ctools_modal_paths = ctools_automodal_get_all_modal_options();
 
   if (isset($ctools_modal_paths[$path])) {
     $modal_options = $ctools_modal_paths[$path];
@@ -256,6 +251,31 @@ function ctools_automodal_get_modal_options($path) {
   };
 
   return $modal_options;
+}
+
+/**
+ * Return keyed array of modal paths and options returned by hook_modal_paths() implementations.
+ *
+ * @return array
+ */
+function ctools_automodal_get_all_modal_options() {
+  static $ctools_modal_paths = NULL;
+
+  if (is_null($ctools_modal_paths)) {
+    $ctools_modal_paths = module_invoke_all('modal_paths');
+    drupal_alter('modal_paths', $ctools_modal_paths);
+  }
+
+  return $ctools_modal_paths;
+}
+
+/**
+ * Return array of modal paths returned by hook_modal_paths() implementations.
+ *
+ * @return array
+ */
+function ctools_automodal_get_modal_paths() {
+  return array_keys(ctools_automodal_get_all_modal_options());
 }
 
 /**
