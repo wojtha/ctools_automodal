@@ -314,6 +314,45 @@ function ctools_automodal_fix_get_q() {
 
 
 /**
+ * Returns redirect path if found.
+ *
+ * Search for the redirect path in the following order:
+ *  1. destination query string,
+ *  2. modal redirect option
+ *  3. form state redirect property
+ *
+ * @param $modal_options
+ * @param $form_state
+ *
+ * @return array
+ *
+ * @see ctools_automodal_get_form()
+ */
+function _ctools_automodal_get_form_redirect_path($modal_options, $form_state) {
+  $path = NULL;
+  $options = array();
+  if ($modal_options['redirect'] !== FALSE && ($modal_options['redirect'] || $form_state['redirect'] || !empty($_GET['destination']))) {
+    if (isset($_GET['destination']) && !url_is_external($_GET['destination'])) {
+      $options = drupal_parse_url($_GET['destination']);
+      $path = $options['path'];
+    }
+    elseif (is_array($modal_options['redirect'])) {
+      list($path, $options) = $modal_options['redirect'] + array(NULL, array());
+    }
+    elseif (is_string($modal_options['redirect'])) {
+      $path = $modal_options['redirect'];
+    }
+    elseif (is_array($form_state['redirect'])) {
+      list($path, $options) = $form_state['redirect'] + array(NULL, array());
+    }
+    elseif (is_string($form_state['redirect'])) {
+      $path = $form_state['redirect'];
+    }
+  }
+  return array($path, $options);
+}
+
+/**
  * Renders form confirm page.
  *
  * @param $modal_options
@@ -359,21 +398,14 @@ function ctools_automodal_get_form() {
       // Close the form or display the confirmation page.
       if ($modal_options['close']) {
         $commands[] = ctools_modal_command_dismiss();
-      // Redirect or reload current page.
-      $options = array();
-      if (isset($_GET['destination']) && !url_is_external($_GET['destination'])) {
-        $options = drupal_parse_url($_GET['destination']);
-        $path = $options['path'];
       }
       elseif ($modal_options['confirm']) {
         list($title, $confirm_page) = _ctools_automodal_get_form_confirm_page($modal_options);
         $commands[] = ctools_modal_command_display($title, $confirm_page);
-      elseif (is_array($form_state['redirect'])) {
-        list($path, $options) = $form_state['redirect'];
       }
-      elseif (is_string($form_state['redirect'])) {
-        $path = $form_state['redirect'];
-      }
+
+      // Redirect or reload current page.
+      list($path, $options) = _ctools_automodal_get_form_redirect_path($modal_options, $form_state);
       if (!empty($path)) {
         $commands[] = ctools_ajax_command_redirect($path, 0, $options);
       }
