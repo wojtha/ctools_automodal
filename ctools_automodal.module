@@ -16,28 +16,31 @@ function ctools_automodal_module_implements_alter(&$implementations, $hook) {
  * Implements hook_menu_alter().
  */
 function ctools_automodal_menu_alter(&$items) {
-  $modal_paths = array();
+  $parsed_modal_paths = array();
 
-  foreach ($items as $path => $item) {
-    if (!empty($item['modal']) && strpos($path, '%ctools_js') === FALSE) {
-      if ($item['page callback'] == 'drupal_get_form') {
-        $items["$path/%ctools_js"] = $item;
-        $items["$path/%ctools_js"]['page callback'] = 'ctools_automodal_get_form';
-        $items["$path/%ctools_js"]['page arguments'][] = substr_count($path, '/') + 1;
-        $items["$path/%ctools_js"]['type'] = MENU_CALLBACK;
-      }
-      else {
-        $items["$path/%ctools_js"] = $item + array('page arguments' => array());
-        $items["$path/%ctools_js"]['page callback'] = 'ctools_automodal_get_page';
-        array_unshift($items["$path/%ctools_js"]['page arguments'], $item['page callback']);
-        $items["$path/%ctools_js"]['page arguments'][] = substr_count($path, '/') + 1;
-        $items["$path/%ctools_js"]['type'] = MENU_CALLBACK;
-      }
-      $modal_paths[] = preg_replace('/%[^\/]*/', '*', $path);
+  $modal_paths = ctools_automodal_get_modal_paths();
+  foreach ($modal_paths as $path) {
+    if (empty($items[$path])) {
+      continue;
     }
+    $item = $items[$path];
+    if ($item['page callback'] == 'drupal_get_form') {
+      $items["$path/%ctools_js"] = $item;
+      $items["$path/%ctools_js"]['page callback'] = 'ctools_automodal_get_form';
+      $items["$path/%ctools_js"]['page arguments'][] = substr_count($path, '/') + 1;
+      $items["$path/%ctools_js"]['type'] = MENU_CALLBACK;
+    }
+    else {
+      $items["$path/%ctools_js"] = $item + array('page arguments' => array());
+      $items["$path/%ctools_js"]['page callback'] = 'ctools_automodal_get_page';
+      array_unshift($items["$path/%ctools_js"]['page arguments'], $item['page callback']);
+      $items["$path/%ctools_js"]['page arguments'][] = substr_count($path, '/') + 1;
+      $items["$path/%ctools_js"]['type'] = MENU_CALLBACK;
+    }
+    $parsed_modal_paths[] = preg_replace('/%[^\/]*/', '*', $path);
   }
 
-  variable_set('ctools_automodal_paths', $modal_paths);
+  variable_set('ctools_automodal_paths', $parsed_modal_paths);
 }
 
 /**
