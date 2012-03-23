@@ -16,9 +16,10 @@ function ctools_automodal_module_implements_alter(&$implementations, $hook) {
  * Implements hook_menu_alter().
  */
 function ctools_automodal_menu_alter(&$items) {
-  $parsed_modal_paths = array();
-
   $modal_paths = ctools_automodal_get_modal_paths();
+  $modal_regexp_pieces = array();
+
+  $convert_to_regexp = function ($value) { return preg_replace('/%[^\/]*/', '[^/]+', $value); };
   foreach ($modal_paths as $path) {
     if (empty($items[$path])) {
       continue;
@@ -37,10 +38,22 @@ function ctools_automodal_menu_alter(&$items) {
       $items["$path/%ctools_js"]['page arguments'][] = substr_count($path, '/') + 1;
       $items["$path/%ctools_js"]['type'] = MENU_CALLBACK;
     }
-    $parsed_modal_paths[] = preg_replace('/%[^\/]*/', '*', $path);
+
+    $modal_regexp_pieces[] = $convert_to_regexp($path);
+    $modal_paths[] = $path;
   }
 
-  variable_set('ctools_automodal_paths', $parsed_modal_paths);
+  if (!empty($modal_paths)) {
+    $all_paths = array_keys($items);
+    $modal_regexp = '@^' . implode('|^', $modal_regexp_pieces) . '@';
+    $not_modal_regexp = '@^' . implode('|^', array_map($convert_to_regexp, array_diff(preg_grep($modal_regexp, $all_paths), $modal_paths))) . '@';
+  }
+  else {
+    $modal_regexp = $not_modal_regexp = '';
+  }
+
+  variable_set('ctools_automodal_regexp', $modal_regexp);
+  variable_set('ctools_automodal_not_regexp', $not_modal_regexp);
 }
 
 /**
@@ -152,18 +165,12 @@ function ctools_automodal_deliver_error($path, $page_callback_result) {
  * Check if an internal Drupal path should be converted to a modal link.
  */
 function ctools_automodal_is_path_modal($path) {
-  static $modal_paths_regex;
-
-  if (!isset($modal_paths_regex)) {
-    $modal_paths = variable_get('ctools_automodal_paths', array());
-    foreach ($modal_paths as &$modal_path) {
-      $modal_path = preg_quote($modal_path, '/');
-      $modal_path = str_replace('\*', '.*', $modal_path);
-    }
-    $modal_paths_regex = '/^(' . implode('|', $modal_paths) . ')$/';
+  $modal_regexp = variable_get('ctools_automodal_regexp');
+  $not_modal_regexp = variable_get('ctools_automodal_not_regexp');
+  if (!$modal_regexp || !$not_modal_regexp) {
+    return FALSE;
   }
-
-  return (bool) preg_match($modal_paths_regex, $path);
+  return preg_match($modal_regexp, $path) && !preg_match($not_modal_regexp, $path);
 }
 
 /**
