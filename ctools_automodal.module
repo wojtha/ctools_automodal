@@ -304,7 +304,7 @@ function ctools_automodal_include_style($style_id) {
 /**
  * Dirty, dirty function to fix the 'current path' global on modal pages.
  */
-function ctools_automodal_fix_get_q() {
+function _ctools_automodal_fix_get_q() {
   $path = current_path();
   // Pop off the /js or /nojs suffix to the path.
   $path = substr($path, 0, strrpos($path, '/'));
@@ -372,9 +372,10 @@ function _ctools_automodal_get_form_confirm_page($modal_options) {
 function ctools_automodal_get_form() {
   $args = func_get_args();
   $form_id = array_shift($args);
-  $js = $ajax = array_pop($args);
+  $ajax = array_pop($args);
 
-  ctools_automodal_fix_get_q();
+  _ctools_automodal_fix_get_q();
+
   // Load modal options.
   $modal_options = ctools_automodal_get_path(current_path());
 
@@ -431,7 +432,7 @@ function ctools_automodal_get_page() {
   $callback = array_shift($args);
   $ajax = array_pop($args);
 
-  ctools_automodal_fix_get_q();
+  _ctools_automodal_fix_get_q();
 
   if (function_exists($callback)) {
     $output = call_user_func_array($callback, $args);
@@ -468,14 +469,13 @@ function ctools_automodal_page_render($output) {
     $output = drupal_render($output);
   }
 
-  $title = drupal_get_title();
-
   // If there are messages for the form, render them.
   if ($messages = theme('status_messages')) {
     $output = '<div class="messages">' . $messages . '</div>' . $output;
   }
 
   $commands = array();
+  $title = drupal_get_title();
   $commands[] = ctools_modal_command_display($title, $output);
   return $commands;
 }
