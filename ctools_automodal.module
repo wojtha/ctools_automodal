@@ -170,7 +170,6 @@ function ctools_automodal_preprocess_link(&$variables) {
   static $ctools_modal_included = FALSE;
 
   if (ctools_automodal_is_path_modal($variables['path'])) {
-    $item = menu_get_item($variables['path']);
 
     // Only process the modal includes once per request.
     if (!$ctools_modal_included) {
