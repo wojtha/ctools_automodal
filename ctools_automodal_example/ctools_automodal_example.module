@@ -1,0 +1,120 @@
+<?php
+
+/**
+ * Implement hook_menu()
+ */
+function ctools_automodal_example_menu() {
+  $items = array();
+
+  $items['contact-us'] = array(
+    'title' => 'Contact Us',
+    'description' => 'Contact Us',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ctools_automodal_example_contact_us_form'),
+    'access arguments' => array('access content'),
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_modal_paths().
+ */
+function ctools_automodal_example_modal_paths() {
+  $paths = array();
+
+  $paths['user/register'] = array(
+    'style' => 'example-signup',
+    'redirect' => 'user',
+    'close' => TRUE,
+  );
+
+  $paths['contact-us'] = array(
+    'style' => 'example-contact',
+    'confirm' => array(
+      'title' => t('Thank you'),
+      'text' => t('Your message has been sent.'),
+    ),
+  );
+
+  return $paths;
+}
+
+/**
+ * Implements hook_modal_styles().
+ */
+function ctools_automodal_example_modal_styles() {
+  $styles = array();
+
+  $styles['example-contact'] = array(
+    'modalSize' => array(
+      'type' => 'fixed',
+      'width' => 500,
+      'height' => 300,
+    ),
+  );
+
+  $styles['example-signup'] = array(
+    'modalSize' => array(
+      'type' => 'fixed',
+      'width' => 500,
+      'height' => 500,
+    ),
+  );
+
+  return $styles;
+}
+
+/**
+ * Implements hook_modal_error_alter().
+ */
+function ctools_automodal_example_modal_error_alter(&$commands, $path, $error) {
+  if ($error == MENU_ACCESS_DENIED) {
+    if (strpos($path, 'user/') !== FALSE) {
+      $commands[0]['output'] = '<span class="ajax-error-page">' . t('You are already signed in.') . '</span>';
+    }
+    else {
+      $commands[0]['output'] = '<span class="ajax-error-page">' . $commands[0]['output'] . '</span>';
+    }
+  }
+}
+
+/**
+ * Contact Us form.
+ */
+function ctools_automodal_example_contact_us_form($form, &$form_state) {
+  global $user;
+
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Your name'),
+    '#default_value' => $user->name,
+    '#maxlength' => 40,
+    '#size' => 20,
+    '#required' => TRUE,
+  );
+
+  $form['message'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Your message'),
+    '#default_value' => '',
+    '#rows' => 4,
+    '#maxlength' => 1000,
+  );
+
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Send message'),
+  );
+
+  return $form;
+}
+
+/**
+ * Contact Us form submit handler.
+ */
+function ctools_automodal_example_contact_us_form_submit($form, &$form_state) {
+  drupal_set_message(t('Your message has been sent.'));
+  drupal_set_message(t('@user is saying: %message', array('@name' => $form_state['values']['name'], '%message' => $form_state['values']['message'])));
+}

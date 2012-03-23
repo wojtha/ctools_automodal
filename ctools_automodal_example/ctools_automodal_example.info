@@ -1,0 +1,4 @@
+name = CTools Automodal Example
+description = Example of automatic modal page API.
+core = 7.x
+dependencies[] = ctools_automodal
