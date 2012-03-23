@@ -106,6 +106,7 @@ function ctools_automodal_get_page_callback_error($path) {
  *
  * @see drupal_deliver_page()
  * @see drupal_deliver_html_page()
+ * @see ajax_prepare_response()
  */
 function ctools_automodal_deliver_error($path, $page_callback_result) {
   // Menu status constants are integers; page content is a string or array.
@@ -113,32 +114,16 @@ function ctools_automodal_deliver_error($path, $page_callback_result) {
     $output = '';
     switch ($page_callback_result) {
       case MENU_NOT_FOUND:
-        // Print a 404 page.
-        // FIXME?: Returning 404 will show the ajax error.
-        //drupal_add_http_header('Status', '404 Not Found');
-        watchdog('page not found', check_plain($path), array(), WATCHDOG_WARNING);
-
-        // Standard 404 handler.
         drupal_set_title(t('Page not found'));
         $output = t('The requested page "@path" could not be found.', array('@path' => request_uri()));
         break;
 
       case MENU_ACCESS_DENIED:
-        // Print a 403 page.
-        // FIXME?: Returning 403 will show the ajax error.
-        //drupal_add_http_header('Status', '403 Forbidden');
-        watchdog('access denied', check_plain($path), array(), WATCHDOG_WARNING);
-
-        // Standard 403 handler.
         drupal_set_title(t('Access denied'));
         $output = t('You are not authorized to access this page.');
         break;
 
       case MENU_SITE_OFFLINE:
-        // Print a 503 page.
-        // FIXME?: Returning 503 will show the ajax error.
-        //drupal_add_http_header('Status', '503 Service unavailable');
-
         drupal_set_title(t('Site maintenance'));
         $output = theme('maintenance_page', array('content' => filter_xss_admin(variable_get('maintenance_mode_message',
           t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Drupal')))))));
