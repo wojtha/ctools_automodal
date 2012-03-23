@@ -179,6 +179,13 @@ function ctools_automodal_preprocess_link(&$variables) {
       $ctools_modal_included = TRUE;
     }
 
+    $options = ctools_automodal_get_path($variables['path']);
+
+    if (!empty($options['style'])) {
+      ctools_automodal_include_style($options['style']);
+      $variables['options']['attributes']['class'][] = 'ctools-modal-' . $options['style'];
+    }
+
     $variables['options']['attributes']['class'][] = 'ctools-use-modal';
 
     if (strpos($variables['path'], 'nojs') === FALSE) {
@@ -198,6 +205,49 @@ function ctools_automodal_preprocess_menu_local_action(&$variables) {
     'text' => &$variables['element']['#link']['title'],
   );
   ctools_automodal_preprocess_link($link);
+}
+
+/**
+/**
+ * Returns CTools modal style definition.
+ *
+ * http://drupal.org/node/872072#comment-3391816
+ *
+ * @param string $style_id
+ * @return array|NULL
+ */
+function ctools_automodal_get_style($style_id) {
+  static $ctools_modal_styles = NULL;
+
+  if (is_null($ctools_modal_styles)) {
+    $ctools_modal_styles = module_invoke_all('modal_styles');
+    drupal_alter('modal_styles', $ctools_modal_styles);
+  }
+
+  return isset($ctools_modal_styles[$style_id]) ? $ctools_modal_styles[$style_id] : NULL;
+}
+
+/**
+ * Includes CTools modal style in the page.
+ *
+ * @param string $style_id
+ * @return boolean
+ */
+function ctools_automodal_include_style($style_id) {
+  static $ctools_modal_styles = array();
+
+  if (!isset($ctools_modal_styles[$style_id])) {
+    $style = ctools_automodal_get_style($style_id);
+    if ($style) {
+      drupal_add_js(array($style_id => $style), 'setting');
+      $ctools_modal_styles[$style_id] = TRUE;
+    }
+    else {
+      $ctools_modal_styles[$style_id] = FALSE;
+    }
+  }
+
+  return $ctools_modal_styles[$style_id];
 }
 
 /**
