@@ -2,7 +2,7 @@
 
 /**
  * @file
- * API documentation for CTools Autoodal.
+ * API documentation for CTools Automodal.
  */
 
 /**
