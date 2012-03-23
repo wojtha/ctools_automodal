@@ -208,6 +208,44 @@ function ctools_automodal_preprocess_menu_local_action(&$variables) {
 }
 
 /**
+
+/**
+ * Return modal configuration for given path.
+ *
+ * @param string $path
+ * @return array|NULL
+ */
+function ctools_automodal_get_path($path) {
+  static $ctools_modal_paths = NULL;
+  $modal_options = NULL;
+
+  if (is_null($ctools_modal_paths)) {
+    $ctools_modal_paths = module_invoke_all('modal_paths');
+    drupal_alter('modal_paths', $ctools_modal_paths);
+  }
+
+  if (isset($ctools_modal_paths[$path])) {
+    $modal_options = $ctools_modal_paths[$path];
+    $modal_options += array(
+      'style' => '',
+      'confirm' => FALSE,
+      'close' => FALSE,
+      'confirm' => FALSE,
+      'reload' => FALSE,
+      'redirect' => '',
+    );
+    if ($modal_options['confirm']) {
+      $modal_options['confirm'] += array(
+        'title' => t('Confirmation'),
+        'text' => t('The form was submitted.'),
+        'callback' => 'ctools_automodal_confirmation_callback',
+      );
+    }
+  };
+
+  return $modal_options;
+}
+
 /**
  * Returns CTools modal style definition.
  *
@@ -270,6 +308,8 @@ function ctools_automodal_get_form() {
   $js = $ajax = array_pop($args);
 
   ctools_automodal_fix_get_q();
+  // Load modal options.
+  $modal_options = ctools_automodal_get_path(current_path());
 
   if ($ajax) {
     ctools_include('modal');
@@ -287,6 +327,10 @@ function ctools_automodal_get_form() {
       // Overwrite the form wrapper output.
       $commands = array();
       $commands[] = ctools_modal_command_loading();
+
+      // Close the form or display the confirmation page.
+      if ($modal_options['close']) {
+        $commands[] = ctools_modal_command_dismiss();
       // Redirect or reload current page.
       $options = array();
       if (isset($_GET['destination']) && !url_is_external($_GET['destination'])) {
@@ -302,7 +346,7 @@ function ctools_automodal_get_form() {
       if (!empty($path)) {
         $commands[] = ctools_ajax_command_redirect($path, 0, $options);
       }
-      else {
+      elseif ($modal_options['reload']) {
         $commands[] = ctools_ajax_command_reload();
       }
     }
