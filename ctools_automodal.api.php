@@ -63,7 +63,7 @@ function hook_modal_styles() {
 /**
  * Implements hook_modal_styles_alter().
  */
-function hook_modal_styles_alter() {
+function hook_modal_styles_alter(&$styles) {
 
 }
 
