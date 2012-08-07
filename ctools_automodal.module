@@ -389,8 +389,8 @@ function _ctools_automodal_get_form_redirect_path($modal_options, $form_state) {
  *
  * @see ctools_automodal_get_form()
  */
-function _ctools_automodal_get_form_confirm_page($modal_options) {
-  $confirmation = call_user_func($modal_options['confirm']['callback'], $modal_options['confirm']);
+function _ctools_automodal_get_form_confirm_page($modal_options, $form_state) {
+  $confirmation = call_user_func($modal_options['confirm']['callback'], array($modal_options['confirm'], $form_state));
   $rendered_confirmation = theme('ctools_automodal_confirmation', $confirmation);
   return array($modal_options['confirm']['title'], $rendered_confirmation);
 }
@@ -399,6 +399,7 @@ function _ctools_automodal_get_form_confirm_page($modal_options) {
  * Display a Drupal form using CTools modal or normal page display.
  */
 function ctools_automodal_get_form() {
+
   $args = func_get_args();
   $form_id = array_shift($args);
   $ajax = array_pop($args);
@@ -430,7 +431,7 @@ function ctools_automodal_get_form() {
         $commands[] = ctools_modal_command_dismiss();
       }
       elseif ($modal_options['confirm']) {
-        list($title, $confirm_page) = _ctools_automodal_get_form_confirm_page($modal_options);
+        list($title, $confirm_page) = _ctools_automodal_get_form_confirm_page($modal_options, $form_state);
         $commands[] = ctools_modal_command_display($title, $confirm_page);
       }
 
@@ -514,7 +515,8 @@ function ctools_automodal_page_render($output) {
  *
  * @param array $options
  */
-function ctools_automodal_confirmation_callback($options) {
+function ctools_automodal_confirmation_callback($vars) {
+  $options = array_shift($vars);
   $confirmation = array();
   $confirmation['messages']['#markup'] = theme('status_messages');
   $confirmation['confirmation']['#markup'] = $options['text'];
