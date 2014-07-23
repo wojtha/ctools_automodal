@@ -247,7 +247,6 @@ function ctools_automodal_get_modal_options($path) {
       'style' => '',
       'confirm' => FALSE,
       'close' => FALSE,
-      'confirm' => FALSE,
       'reload' => FALSE,
       'redirect' => '',
     );
