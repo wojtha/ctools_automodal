@@ -271,7 +271,7 @@ function ctools_automodal_get_modal_options($path) {
 }
 
 /**
- * Return keyed array of modal paths and options returned by hook_modal_paths() implementations.
+ * Return keyed array of modal paths and options returned by hook_ctools_automodal_paths() implementations.
  *
  * @return array
  */
@@ -279,15 +279,15 @@ function ctools_automodal_get_all_modal_options() {
   static $ctools_modal_paths = NULL;
 
   if (is_null($ctools_modal_paths)) {
-    $ctools_modal_paths = module_invoke_all('modal_paths');
-    drupal_alter('modal_paths', $ctools_modal_paths);
+    $ctools_modal_paths = module_invoke_all('ctools_automodal_paths');
+    drupal_alter('ctools_automodal_paths', $ctools_modal_paths);
   }
 
   return $ctools_modal_paths;
 }
 
 /**
- * Return array of modal paths returned by hook_modal_paths() implementations.
+ * Return array of modal paths returned by hook_ctools_automodal_paths() implementations.
  *
  * @return array
  */
@@ -307,8 +307,8 @@ function ctools_automodal_get_style($style_id) {
   static $ctools_modal_styles = NULL;
 
   if (is_null($ctools_modal_styles)) {
-    $ctools_modal_styles = module_invoke_all('modal_styles');
-    drupal_alter('modal_styles', $ctools_modal_styles);
+    $ctools_modal_styles = module_invoke_all('ctools_automodal_styles');
+    drupal_alter('ctools_automodal_styles', $ctools_modal_styles);
   }
 
   return isset($ctools_modal_styles[$style_id]) ? $ctools_modal_styles[$style_id] : NULL;

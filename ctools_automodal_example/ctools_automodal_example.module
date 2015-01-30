@@ -18,9 +18,9 @@ function ctools_automodal_example_menu() {
 }
 
 /**
- * Implements hook_modal_paths().
+ * Implements hook_ctools_automodal_paths().
  */
-function ctools_automodal_example_modal_paths() {
+function ctools_automodal_example_ctools_automodal_paths() {
   $paths = array();
 
   $paths['user/register'] = array(
@@ -41,9 +41,9 @@ function ctools_automodal_example_modal_paths() {
 }
 
 /**
- * Implements hook_modal_styles().
+ * Implements hook_ctools_automodal_styles().
  */
-function ctools_automodal_example_modal_styles() {
+function ctools_automodal_example_ctools_automodal_styles() {
   $styles = array();
 
   $styles['example-contact'] = array(
@@ -66,9 +66,9 @@ function ctools_automodal_example_modal_styles() {
 }
 
 /**
- * Implements hook_modal_error_alter().
+ * Implements hook_ctools_automodal_error_alter().
  */
-function ctools_automodal_example_modal_error_alter(&$commands, $path, $error) {
+function ctools_automodal_example_ctools_automodal_error_alter(&$commands, $path, $error) {
   if ($error == MENU_ACCESS_DENIED) {
     if (strpos($path, 'user/') !== FALSE) {
       $commands[0]['output'] = '<span class="ajax-error-page">' . t('You are already signed in.') . '</span>';

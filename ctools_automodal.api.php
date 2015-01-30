@@ -6,9 +6,9 @@
  */
 
 /**
- * Implements hook_modal_paths().
+ * Implements hook_ctools_automodal_paths().
  */
-function hook_modal_paths() {
+function hook_ctools_automodal_paths() {
   $paths = array();
 
   $paths['user/register'] = array(
@@ -29,16 +29,16 @@ function hook_modal_paths() {
 }
 
 /**
- * Implements hook_modal_paths_alter().
+ * Implements hook_ctools_automodal_alter().
  */
-function hook_modal_paths_alter(&$paths) {
+function hook_ctools_automodal_alter(&$paths) {
 
 }
 
 /**
- * Implements hook_modal_styles().
+ * Implements hook_ctools_automodal_styles().
  */
-function hook_modal_styles() {
+function hook_ctools_automodal_styles() {
   $styles = array();
 
   $styles['example-contact'] = array(
@@ -61,16 +61,16 @@ function hook_modal_styles() {
 }
 
 /**
- * Implements hook_modal_styles_alter().
+ * Implements hook_ctools_automodal_styles_alter().
  */
-function hook_modal_styles_alter(&$styles) {
+function hook_ctools_automodal_styles_alter(&$styles) {
 
 }
 
 /**
- * Implements hook_modal_error_alter().
+ * Implements hook_ctools_automodal_error_alter().
  */
-function hook_modal_error_alter(&$commands, $path, $error) {
+function hook_ctools_automodal_error_alter(&$commands, $path, $error) {
   if ($error == MENU_ACCESS_DENIED) {
     if (strpos($path, 'user/') !== FALSE) {
       $commands[0]['output'] = '<span class="ajax-error-page">' . t('You are already signed in.') . '</span>';
