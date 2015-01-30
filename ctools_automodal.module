@@ -84,8 +84,8 @@ function ctools_automodal_get_system_uri() {
   $path_parts = explode('/', $path['path']);
   if (in_array(end($path_parts), array('nojs', 'ajax'))) {
     array_pop($path_parts);
-    $path = implode('/', $path_parts);
   }
+  $path = implode('/', $path_parts);
   return $path;
 }
 
