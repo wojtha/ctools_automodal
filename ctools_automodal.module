@@ -232,6 +232,26 @@ function ctools_automodal_theme($existing, $type, $theme, $path) {
 }
 
 /**
+ * Similar to l() but adds modal options to it.
+ *
+ * @param $text
+ * @param $path
+ * @param array $options
+ * @return string
+ *
+ * @see l
+ */
+function ctools_automodal_link($text, $path, array $options = array()) {
+  $link = array(
+    'path' => $path,
+    'options' => $options,
+    'text' => $text,
+  );
+  ctools_automodal_preprocess_link($link);
+  return l($link['text'], $link['path'], $link['options']);
+}
+
+/**
  * Return modal configuration for given path.
  *
  * @param string $path
